@@ -1,0 +1,9 @@
+* text=auto
+
+Makefile text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.cu text eol=lf
+*.cuh text eol=lf
+*.md text eol=lf
