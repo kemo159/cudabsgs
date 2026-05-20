@@ -387,6 +387,7 @@ uint64_t BSGS_BUFFERREGISTERLENGTH = 36;
 BSGS Variables
 */
 int *bsgs_found;
+static volatile int bsgs_all_found = 0;
 std::vector<Point> OriginalPointsBSGS;
 bool *OriginalPointsBSGScompressed;
 
@@ -4088,15 +4089,16 @@ void *thread_process_bsgs(void *vargp)	{
 								}
 								free(hextemp);
 								free(aux_c);
-								bsgs_found[k] = 1;
-								salir = 1;
-								for(l = 0; l < bsgs_point_number && salir; l++)	{
-									salir &= bsgs_found[l];
-								}
-								if(salir)	{
-									printf("All points were found\n");
-									exit(EXIT_FAILURE);
-								}
+									bsgs_found[k] = 1;
+									salir = 1;
+									for(l = 0; l < bsgs_point_number && salir; l++)	{
+										salir &= bsgs_found[l];
+									}
+											if(salir)	{
+												printf("All points were found\n");
+												bsgs_all_found = 1;
+												goto thread_bsgs_done;
+											}
 							}
 						}
 					}
@@ -4147,15 +4149,16 @@ void *thread_process_bsgs(void *vargp)	{
 #else
 								pthread_mutex_unlock(&write_keys);
 #endif
-								bsgs_found[k] = 1;
-								salir = 1;
-								for(l = 0; l < bsgs_point_number && salir; l++)	{
-									salir &= bsgs_found[l];
-								}
-								if(salir)	{
-									printf("All points were found\n");
-									exit(EXIT_FAILURE);
-								}
+									bsgs_found[k] = 1;
+									salir = 1;
+									for(l = 0; l < bsgs_point_number && salir; l++)	{
+										salir &= bsgs_found[l];
+									}
+									if(salir)	{
+										printf("All points were found\n");
+										bsgs_all_found = 1;
+										goto thread_bsgs_done;
+									}
 							}
 						}
 					}
@@ -4284,7 +4287,8 @@ void *thread_process_bsgs(void *vargp)	{
 									}
 									if(salir)	{
 										printf("All points were found\n");
-										exit(EXIT_FAILURE);
+										bsgs_all_found = 1;
+										goto thread_bsgs_done;
 									}
 								}
 							}
@@ -4339,10 +4343,11 @@ void *thread_process_bsgs(void *vargp)	{
 								for(l = 0; l < bsgs_point_number && salir; l++)	{
 									salir &= bsgs_found[l];
 								}
-								if(salir)	{
-									printf("All points were found\n");
-									exit(EXIT_FAILURE);
-								}
+									if(salir)	{
+										printf("All points were found\n");
+										bsgs_all_found = 1;
+										goto thread_bsgs_done;
+									}
 							}
 						}
 					}
@@ -4456,10 +4461,11 @@ pn.y.ModAdd(&GSn[i].y);
 								for(l = 0; l < bsgs_point_number && salir; l++)	{
 									salir &= bsgs_found[l];
 								}
-								if(salir)	{
-									printf("All points were found\n");
-									exit(EXIT_FAILURE);
-								}
+									if(salir)	{
+										printf("All points were found\n");
+										bsgs_all_found = 1;
+										goto thread_bsgs_done;
+									}
 							} //End if second check
 						}//End if first check
 					}// For for pts variable
@@ -4485,7 +4491,8 @@ pn.y.ModAdd(&GSn[i].y);
 			}// End if 
 		}
 		steps[thread_number]+=2;
-	}while(1);
+		}while(!bsgs_all_found);
+thread_bsgs_done:
 #ifdef KEYHUNT_CUDA
 	keyhunt_cuda_bsgs_center_workspace_destroy(cuda_center_workspace);
 	for(int cuda_buf = 0; cuda_buf < 2; cuda_buf++) {
@@ -6055,18 +6062,19 @@ void *thread_process_bsgs_both(void *vargp)	{
 #if defined(_WIN64) && !defined(__CYGWIN__)
 									ReleaseMutex(write_keys);
 #else
-									pthread_mutex_unlock(&write_keys);
+										pthread_mutex_unlock(&write_keys);
 #endif
 
-									bsgs_found[k] = 1;
-									salir = 1;
-									for(l = 0; l < bsgs_point_number && salir; l++)	{
-										salir &= bsgs_found[l];
-									}
-									if(salir)	{
-										printf("All points were found\n");
-										exit(EXIT_FAILURE);
-									}
+										bsgs_found[k] = 1;
+										salir = 1;
+										for(l = 0; l < bsgs_point_number && salir; l++)	{
+											salir &= bsgs_found[l];
+										}
+										if(salir)	{
+											printf("All points were found\n");
+											bsgs_all_found = 1;
+											exit(EXIT_SUCCESS);
+										}
 								} //End if second check
 							}//End if first check
 							
