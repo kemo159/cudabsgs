@@ -1,5 +1,6 @@
 bPfile
 hexcharstoraw
+build_win/
 *.bin
 keyhunt
 keyhunt_cuda

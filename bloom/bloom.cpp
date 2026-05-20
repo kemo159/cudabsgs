@@ -19,8 +19,16 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <sys/types.h>
+#if defined(_WIN64) && !defined(__CYGWIN__)
+#include <io.h>
+#define read _read
+#define write _write
+#define close _close
+typedef intptr_t ssize_t;
+#else
 #include <unistd.h>
 #include <pthread.h>
+#endif
 
 #include "bloom.h"
 #include "../xxhash/xxhash.h"
@@ -192,7 +200,7 @@ int bloom_save(struct bloom * bloom, char * filename)
     return 1;
   }
 
-  int fd = open(filename, O_WRONLY | O_CREAT, 0644);
+  int fd = _open(filename, O_WRONLY | O_CREAT | O_BINARY, 0644);
   if (fd < 0) {
     return 1;
   }
@@ -229,7 +237,7 @@ int bloom_load(struct bloom * bloom, char * filename)
 
   memset(bloom, 0, sizeof(struct bloom));
 
-  int fd = open(filename, O_RDONLY);
+  int fd = _open(filename, O_RDONLY | O_BINARY);
   if (fd < 0) { return 3; }
 
   char line[30];

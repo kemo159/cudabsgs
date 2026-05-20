@@ -19,8 +19,16 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <sys/types.h>
+#if defined(_WIN64) && !defined(__CYGWIN__)
+#include <io.h>
+#define read _read
+#define write _write
+#define close _close
+typedef intptr_t ssize_t;
+#else
 #include <unistd.h>
 #include <pthread.h>
+#endif
 
 #include "oldbloom.h"
 #include "../xxhash/xxhash.h"
@@ -132,6 +140,11 @@ int oldbloom_init2(struct oldbloom * bloom, uint64_t entries, long double error)
   bloom->ready = 1;
   bloom->major = BLOOM_VERSION_MAJOR;
   bloom->minor = BLOOM_VERSION_MINOR;
+#if defined(_WIN64) && !defined(__CYGWIN__)
+  bloom->mutex = CreateMutex(NULL, FALSE, NULL);
+#else
+  pthread_mutex_init((pthread_mutex_t*)&bloom->mutex,NULL);
+#endif
   return 0;
 }
 
@@ -204,7 +217,7 @@ int oldbloom_save(struct oldbloom * bloom, char * filename)
     return 1;
   }
 
-  int fd = open(filename, O_WRONLY | O_CREAT, 0644);
+  int fd = _open(filename, O_WRONLY | O_CREAT | O_BINARY, 0644);
   if (fd < 0) {
     return 1;
   }
@@ -241,7 +254,7 @@ int oldbloom_load(struct oldbloom * bloom, char * filename)
 
   memset(bloom, 0, sizeof(struct oldbloom));
 
-  int fd = open(filename, O_RDONLY);
+  int fd = _open(filename, O_RDONLY | O_BINARY);
   if (fd < 0) { return 3; }
 
   char line[30];

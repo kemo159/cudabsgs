@@ -53,6 +53,15 @@ make clean
 make -j$(nproc) keyhunt_cuda CUDA_ARCH=sm_120
 ```
 
+Native Windows CUDA build:
+
+```cmd
+set CUDA_ARCH=sm_120
+build_win.bat
+```
+
+The Windows build requires Visual Studio 2022 Build Tools and the NVIDIA CUDA toolkit. `build_win.bat` calls `vcvars64.bat` automatically and writes `keyhunt_cuda.exe` in the repository root.
+
 Set `CUDA_ARCH` for your GPU:
 
 | GPU family | Example GPUs | CUDA_ARCH |
@@ -148,6 +157,8 @@ keyhunt_bsgs_cuda_*.gcache
 ```
 
 Later runs can reuse these files and start faster. They are ignored by git because they are generated artifacts and can be very large.
+
+Cache files are not guaranteed to be portable between Linux/WSL and native Windows builds. If a native Windows run reports a checksum mismatch on cache files created by Linux/WSL, delete the matching `keyhunt_bsgs_*` and `keyhunt_bsgs_cuda_*` files and let the Windows build regenerate them.
 
 ## Other Targets
 

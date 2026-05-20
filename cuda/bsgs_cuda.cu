@@ -984,12 +984,13 @@ __device__ cuda_bsgs_scalar scalar_add(const cuda_bsgs_scalar &a, const cuda_bsg
 
 __device__ cuda_bsgs_scalar scalar_mul_u32(const cuda_bsgs_scalar &a, uint32_t m) {
   cuda_bsgs_scalar r;
-  unsigned __int128 carry = 0;
+  uint64_t carry = 0;
   #pragma unroll
   for (int i = 0; i < 4; i++) {
-    const unsigned __int128 product = (unsigned __int128)a.v[i] * (unsigned __int128)m + carry;
-    r.v[i] = (uint64_t)product;
-    carry = product >> 64;
+    const uint64_t lo = (a.v[i] & 0xffffffffULL) * (uint64_t)m + carry;
+    const uint64_t hi = (a.v[i] >> 32) * (uint64_t)m + (lo >> 32);
+    r.v[i] = (hi << 32) | (lo & 0xffffffffULL);
+    carry = hi >> 32;
   }
   return r;
 }
